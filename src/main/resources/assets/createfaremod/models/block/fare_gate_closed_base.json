@@ -1,0 +1,59 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "createfaremod:block/fare_gate",
+    "body": "createfaremod:block/fare_gate",
+    "dark": "minecraft:block/black_concrete",
+    "signal": "minecraft:block/green_concrete"
+  },
+  "elements": [
+    {
+      "from": [0, 0, 0],
+      "to": [3, 16, 16],
+      "faces": {
+        "down": {"texture": "#body"},
+        "up": {"texture": "#body"},
+        "north": {"texture": "#body"},
+        "south": {"texture": "#body"},
+        "west": {"texture": "#body"},
+        "east": {"texture": "#body"}
+      }
+    },
+    {
+      "from": [13, 0, 0],
+      "to": [16, 16, 16],
+      "faces": {
+        "down": {"texture": "#body"},
+        "up": {"texture": "#body"},
+        "north": {"texture": "#body"},
+        "south": {"texture": "#body"},
+        "west": {"texture": "#body"},
+        "east": {"texture": "#body"}
+      }
+    },
+    {
+      "from": [3, 4, 6],
+      "to": [13, 14, 10],
+      "faces": {
+        "down": {"texture": "#dark"},
+        "up": {"texture": "#dark"},
+        "north": {"texture": "#dark"},
+        "south": {"texture": "#dark"},
+        "west": {"texture": "#dark"},
+        "east": {"texture": "#dark"}
+      }
+    },
+    {
+      "from": [0.5, 8, -0.05],
+      "to": [2.5, 13, 0.25],
+      "faces": {
+        "down": {"texture": "#signal"},
+        "up": {"texture": "#signal"},
+        "north": {"texture": "#signal"},
+        "south": {"texture": "#signal"},
+        "west": {"texture": "#signal"},
+        "east": {"texture": "#signal"}
+      }
+    }
+  ]
+}

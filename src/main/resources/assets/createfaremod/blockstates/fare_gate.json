@@ -1,34 +1,48 @@
 {
   "variants": {
-    "facing=north,open=false": {
-      "model": "createfaremod:block/fare_gate"
-    },
-    "facing=east,open=false": {
-      "model": "createfaremod:block/fare_gate",
-      "y": 90
-    },
-    "facing=south,open=false": {
-      "model": "createfaremod:block/fare_gate",
-      "y": 180
-    },
-    "facing=west,open=false": {
-      "model": "createfaremod:block/fare_gate",
-      "y": 270
-    },
-    "facing=north,open=true": {
-      "model": "createfaremod:block/fare_gate_open"
-    },
-    "facing=east,open=true": {
-      "model": "createfaremod:block/fare_gate_open",
-      "y": 90
-    },
-    "facing=south,open=true": {
-      "model": "createfaremod:block/fare_gate_open",
-      "y": 180
-    },
-    "facing=west,open=true": {
-      "model": "createfaremod:block/fare_gate_open",
-      "y": 270
-    }
+    "facing=north,open=false,status=normal": {"model": "createfaremod:block/fare_gate"},
+    "facing=east,open=false,status=normal": {"model": "createfaremod:block/fare_gate", "y": 90},
+    "facing=south,open=false,status=normal": {"model": "createfaremod:block/fare_gate", "y": 180},
+    "facing=west,open=false,status=normal": {"model": "createfaremod:block/fare_gate", "y": 270},
+    "facing=north,open=true,status=normal": {"model": "createfaremod:block/fare_gate_open"},
+    "facing=east,open=true,status=normal": {"model": "createfaremod:block/fare_gate_open", "y": 90},
+    "facing=south,open=true,status=normal": {"model": "createfaremod:block/fare_gate_open", "y": 180},
+    "facing=west,open=true,status=normal": {"model": "createfaremod:block/fare_gate_open", "y": 270},
+
+    "facing=north,open=false,status=processing": {"model": "createfaremod:block/fare_gate_processing"},
+    "facing=east,open=false,status=processing": {"model": "createfaremod:block/fare_gate_processing", "y": 90},
+    "facing=south,open=false,status=processing": {"model": "createfaremod:block/fare_gate_processing", "y": 180},
+    "facing=west,open=false,status=processing": {"model": "createfaremod:block/fare_gate_processing", "y": 270},
+    "facing=north,open=true,status=processing": {"model": "createfaremod:block/fare_gate_open_processing"},
+    "facing=east,open=true,status=processing": {"model": "createfaremod:block/fare_gate_open_processing", "y": 90},
+    "facing=south,open=true,status=processing": {"model": "createfaremod:block/fare_gate_open_processing", "y": 180},
+    "facing=west,open=true,status=processing": {"model": "createfaremod:block/fare_gate_open_processing", "y": 270},
+
+    "facing=north,open=false,status=success": {"model": "createfaremod:block/fare_gate_success"},
+    "facing=east,open=false,status=success": {"model": "createfaremod:block/fare_gate_success", "y": 90},
+    "facing=south,open=false,status=success": {"model": "createfaremod:block/fare_gate_success", "y": 180},
+    "facing=west,open=false,status=success": {"model": "createfaremod:block/fare_gate_success", "y": 270},
+    "facing=north,open=true,status=success": {"model": "createfaremod:block/fare_gate_open_success"},
+    "facing=east,open=true,status=success": {"model": "createfaremod:block/fare_gate_open_success", "y": 90},
+    "facing=south,open=true,status=success": {"model": "createfaremod:block/fare_gate_open_success", "y": 180},
+    "facing=west,open=true,status=success": {"model": "createfaremod:block/fare_gate_open_success", "y": 270},
+
+    "facing=north,open=false,status=failure": {"model": "createfaremod:block/fare_gate_failure"},
+    "facing=east,open=false,status=failure": {"model": "createfaremod:block/fare_gate_failure", "y": 90},
+    "facing=south,open=false,status=failure": {"model": "createfaremod:block/fare_gate_failure", "y": 180},
+    "facing=west,open=false,status=failure": {"model": "createfaremod:block/fare_gate_failure", "y": 270},
+    "facing=north,open=true,status=failure": {"model": "createfaremod:block/fare_gate_open_failure"},
+    "facing=east,open=true,status=failure": {"model": "createfaremod:block/fare_gate_open_failure", "y": 90},
+    "facing=south,open=true,status=failure": {"model": "createfaremod:block/fare_gate_open_failure", "y": 180},
+    "facing=west,open=true,status=failure": {"model": "createfaremod:block/fare_gate_open_failure", "y": 270},
+
+    "facing=north,open=false,status=maintenance": {"model": "createfaremod:block/fare_gate_maintenance"},
+    "facing=east,open=false,status=maintenance": {"model": "createfaremod:block/fare_gate_maintenance", "y": 90},
+    "facing=south,open=false,status=maintenance": {"model": "createfaremod:block/fare_gate_maintenance", "y": 180},
+    "facing=west,open=false,status=maintenance": {"model": "createfaremod:block/fare_gate_maintenance", "y": 270},
+    "facing=north,open=true,status=maintenance": {"model": "createfaremod:block/fare_gate_open_maintenance"},
+    "facing=east,open=true,status=maintenance": {"model": "createfaremod:block/fare_gate_open_maintenance", "y": 90},
+    "facing=south,open=true,status=maintenance": {"model": "createfaremod:block/fare_gate_open_maintenance", "y": 180},
+    "facing=west,open=true,status=maintenance": {"model": "createfaremod:block/fare_gate_open_maintenance", "y": 270}
   }
 }

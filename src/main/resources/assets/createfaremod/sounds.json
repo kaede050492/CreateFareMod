@@ -1,0 +1,42 @@
+{
+  "gate_success": {
+    "subtitle": "subtitle.createfaremod.gate_success",
+    "sounds": [
+      {
+        "name": "minecraft:block.note_block.bit",
+        "type": "event",
+        "pitch": 1.4
+      }
+    ]
+  },
+  "gate_failure": {
+    "subtitle": "subtitle.createfaremod.gate_failure",
+    "sounds": [
+      {
+        "name": "minecraft:block.note_block.bass",
+        "type": "event",
+        "pitch": 0.8
+      }
+    ]
+  },
+  "gate_open": {
+    "subtitle": "subtitle.createfaremod.gate_open",
+    "sounds": [
+      {
+        "name": "minecraft:block.iron_door.open",
+        "type": "event",
+        "pitch": 1.15
+      }
+    ]
+  },
+  "gate_close": {
+    "subtitle": "subtitle.createfaremod.gate_close",
+    "sounds": [
+      {
+        "name": "minecraft:block.iron_door.close",
+        "type": "event",
+        "pitch": 1.15
+      }
+    ]
+  }
+}

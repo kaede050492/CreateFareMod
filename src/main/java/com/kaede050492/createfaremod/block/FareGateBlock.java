@@ -1,17 +1,22 @@
 package com.kaede050492.createfaremod.block;
 
 import com.kaede050492.createfaremod.block.entity.FareGateBlockEntity;
+import com.kaede050492.createfaremod.gate.GateStatus;
 import com.kaede050492.createfaremod.registry.ModBlockEntities;
 import com.mojang.serialization.MapCodec;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Mirror;
@@ -27,6 +32,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.BlockHitResult;
@@ -39,6 +45,7 @@ public final class FareGateBlock extends BaseEntityBlock implements SimpleWaterl
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final BooleanProperty OPEN = BlockStateProperties.OPEN;
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
+    public static final EnumProperty<GateStatus> STATUS = EnumProperty.create("status", GateStatus.class);
 
     private static final VoxelShape NORTH_SOUTH_OPEN_SHAPE = Shapes.or(
             Block.box(0.0, 0.0, 0.0, 3.0, 16.0, 16.0),
@@ -62,7 +69,8 @@ public final class FareGateBlock extends BaseEntityBlock implements SimpleWaterl
         registerDefaultState(stateDefinition.any()
                 .setValue(FACING, Direction.NORTH)
                 .setValue(OPEN, false)
-                .setValue(WATERLOGGED, false));
+                .setValue(WATERLOGGED, false)
+                .setValue(STATUS, GateStatus.NORMAL));
     }
 
     @Override
@@ -82,6 +90,22 @@ public final class FareGateBlock extends BaseEntityBlock implements SimpleWaterl
         return defaultBlockState()
                 .setValue(FACING, context.getHorizontalDirection().getOpposite())
                 .setValue(WATERLOGGED, fluidState.getType() == Fluids.WATER);
+    }
+
+    @Override
+    public void setPlacedBy(
+            Level level,
+            BlockPos pos,
+            BlockState state,
+            @Nullable LivingEntity placer,
+            ItemStack stack
+    ) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        if (!level.isClientSide
+                && placer != null
+                && level.getBlockEntity(pos) instanceof FareGateBlockEntity fareGate) {
+            fareGate.setOwnerIfAbsent(placer.getUUID());
+        }
     }
 
     @Override
@@ -125,10 +149,23 @@ public final class FareGateBlock extends BaseEntityBlock implements SimpleWaterl
             return InteractionResult.SUCCESS;
         }
         if (level.getBlockEntity(pos) instanceof FareGateBlockEntity fareGate) {
-            fareGate.toggleGate(player);
+            if (player.isShiftKeyDown() && player instanceof ServerPlayer serverPlayer) {
+                fareGate.openOperatorMenu(serverPlayer);
+            } else {
+                fareGate.toggleGate(player);
+            }
             return InteractionResult.CONSUME;
         }
         return InteractionResult.PASS;
+    }
+
+    @Override
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
+        ItemStack stack = super.getCloneItemStack(level, pos, state);
+        if (level.getBlockEntity(pos) instanceof FareGateBlockEntity fareGate) {
+            fareGate.saveConfigurationToItem(stack, level.registryAccess());
+        }
+        return stack;
     }
 
     @Override
@@ -165,6 +202,6 @@ public final class FareGateBlock extends BaseEntityBlock implements SimpleWaterl
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, OPEN, WATERLOGGED);
+        builder.add(FACING, OPEN, WATERLOGGED, STATUS);
     }
 }

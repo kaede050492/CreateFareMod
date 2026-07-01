@@ -1,6 +1,7 @@
 package com.kaede050492.createfaremod.registry;
 
 import com.kaede050492.createfaremod.CreateFareMod;
+import com.kaede050492.createfaremod.item.FareGateConfigCardItem;
 import com.kaede050492.createfaremod.item.IcCardItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -19,6 +20,11 @@ public final class ModItems {
     public static final DeferredItem<IcCardItem> IC_CARD = ITEMS.register(
             "ic_card",
             () -> new IcCardItem(new Item.Properties().stacksTo(1))
+    );
+
+    public static final DeferredItem<FareGateConfigCardItem> CONFIG_CARD = ITEMS.register(
+            "config_card",
+            () -> new FareGateConfigCardItem(new Item.Properties().stacksTo(1))
     );
 
     private ModItems() {

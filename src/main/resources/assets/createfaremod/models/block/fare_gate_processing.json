@@ -1,6 +1,6 @@
 {
   "parent": "createfaremod:block/fare_gate_closed_base",
   "textures": {
-    "signal": "minecraft:block/green_concrete"
+    "signal": "minecraft:block/blue_concrete"
   }
 }

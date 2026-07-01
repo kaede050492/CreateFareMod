@@ -20,6 +20,7 @@ public final class ModCreativeTabs {
                     .displayItems((parameters, output) -> {
                         output.accept(ModItems.FARE_GATE.get());
                         output.accept(ModItems.IC_CARD.get());
+                        output.accept(ModItems.CONFIG_CARD.get());
                     })
                     .build()
     );
