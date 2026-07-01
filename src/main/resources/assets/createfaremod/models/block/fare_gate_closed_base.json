@@ -4,6 +4,7 @@
     "particle": "createfaremod:block/fare_gate",
     "body": "createfaremod:block/fare_gate",
     "dark": "minecraft:block/black_concrete",
+    "reader": "minecraft:block/blue_concrete",
     "signal": "minecraft:block/green_concrete"
   },
   "elements": [
@@ -11,48 +12,55 @@
       "from": [0, 0, 0],
       "to": [3, 16, 16],
       "faces": {
-        "down": {"texture": "#body"},
-        "up": {"texture": "#body"},
-        "north": {"texture": "#body"},
-        "south": {"texture": "#body"},
-        "west": {"texture": "#body"},
-        "east": {"texture": "#body"}
+        "down": {"uv": [0, 0, 3, 16], "texture": "#body"},
+        "up": {"uv": [0, 0, 3, 16], "texture": "#body"},
+        "north": {"uv": [0, 0, 3, 16], "texture": "#body"},
+        "south": {"uv": [0, 0, 3, 16], "texture": "#body"},
+        "west": {"uv": [0, 0, 16, 16], "texture": "#body"},
+        "east": {"uv": [0, 0, 16, 16], "texture": "#body"}
       }
     },
     {
       "from": [13, 0, 0],
       "to": [16, 16, 16],
       "faces": {
-        "down": {"texture": "#body"},
-        "up": {"texture": "#body"},
-        "north": {"texture": "#body"},
-        "south": {"texture": "#body"},
-        "west": {"texture": "#body"},
-        "east": {"texture": "#body"}
+        "down": {"uv": [0, 0, 3, 16], "texture": "#body"},
+        "up": {"uv": [0, 0, 3, 16], "texture": "#body"},
+        "north": {"uv": [0, 0, 3, 16], "texture": "#body"},
+        "south": {"uv": [0, 0, 3, 16], "texture": "#body"},
+        "west": {"uv": [0, 0, 16, 16], "texture": "#body"},
+        "east": {"uv": [0, 0, 16, 16], "texture": "#body"}
       }
     },
     {
-      "from": [3, 4, 6],
-      "to": [13, 14, 10],
+      "from": [3, 4, 7],
+      "to": [8, 14, 9],
       "faces": {
-        "down": {"texture": "#dark"},
-        "up": {"texture": "#dark"},
-        "north": {"texture": "#dark"},
-        "south": {"texture": "#dark"},
-        "west": {"texture": "#dark"},
-        "east": {"texture": "#dark"}
+        "down": {"uv": [0, 0, 5, 2], "texture": "#dark"},
+        "up": {"uv": [0, 0, 5, 2], "texture": "#dark"},
+        "north": {"uv": [0, 0, 5, 10], "texture": "#dark"},
+        "south": {"uv": [0, 0, 5, 10], "texture": "#dark"},
+        "west": {"uv": [0, 0, 2, 10], "texture": "#dark"},
+        "east": {"uv": [0, 0, 2, 10], "texture": "#dark"}
+      }
+    },
+    {
+      "from": [8, 4, 7],
+      "to": [13, 14, 9],
+      "faces": {
+        "down": {"uv": [0, 0, 5, 2], "texture": "#dark"},
+        "up": {"uv": [0, 0, 5, 2], "texture": "#dark"},
+        "north": {"uv": [0, 0, 5, 10], "texture": "#dark"},
+        "south": {"uv": [0, 0, 5, 10], "texture": "#dark"},
+        "west": {"uv": [0, 0, 2, 10], "texture": "#dark"},
+        "east": {"uv": [0, 0, 2, 10], "texture": "#dark"}
       }
     },
     {
       "from": [0.5, 8, -0.05],
       "to": [2.5, 13, 0.25],
       "faces": {
-        "down": {"texture": "#signal"},
-        "up": {"texture": "#signal"},
-        "north": {"texture": "#signal"},
-        "south": {"texture": "#signal"},
-        "west": {"texture": "#signal"},
-        "east": {"texture": "#signal"}
+        "north": {"uv": [0, 0, 16, 16], "texture": "#reader"}
       }
     }
   ]
