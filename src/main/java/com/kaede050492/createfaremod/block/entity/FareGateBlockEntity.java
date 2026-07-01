@@ -5,11 +5,13 @@ import com.kaede050492.createfaremod.currency.CurrencyAdapter;
 import com.kaede050492.createfaremod.currency.LightmansCurrencyAdapter;
 import com.kaede050492.createfaremod.data.CardLedgerSavedData;
 import com.kaede050492.createfaremod.data.TransactionLogSavedData;
+import com.kaede050492.createfaremod.fare.FareManager;
 import com.kaede050492.createfaremod.gate.GateConfiguration;
 import com.kaede050492.createfaremod.gate.GateMode;
 import com.kaede050492.createfaremod.gate.GateStatus;
 import com.kaede050492.createfaremod.menu.FareGateMenu;
 import com.kaede050492.createfaremod.network.PaymentFailurePayload;
+import com.kaede050492.createfaremod.network.TransactionResultPayload;
 import com.kaede050492.createfaremod.registry.ModBlockEntities;
 import com.kaede050492.createfaremod.registry.ModItems;
 import com.kaede050492.createfaremod.registry.ModSounds;
@@ -43,6 +45,7 @@ public final class FareGateBlockEntity extends BlockEntity {
     private static final String GATE_OPEN_TAG = "gateOpen";
     private static final String LAST_ACCESS_TIME_TAG = "lastAccessTime";
     private static final String CONFIGURATION_TAG = "configuration";
+    private static final String GATE_ID_TAG = "gateId";
     private static final String ITEM_CONFIGURATION_TAG = "createfaremod.gateConfiguration";
     private static final int PROCESSING_TICKS = 10;
     private static final int OPEN_TICKS = 30;
@@ -51,6 +54,7 @@ public final class FareGateBlockEntity extends BlockEntity {
     private boolean gateOpen;
     private long lastAccessTime;
     private GateConfiguration configuration = GateConfiguration.empty();
+    private UUID gateId = UUID.randomUUID();
     private UUID pendingPlayer;
     private InteractionHand pendingHand;
     private int processingTicks;
@@ -80,9 +84,13 @@ public final class FareGateBlockEntity extends BlockEntity {
             if (blockEntity.gateOpen) {
                 blockEntity.setGateOpen(false, null);
             }
-            blockEntity.setStatus(blockEntity.configuration.validate().isPresent()
-                    ? GateStatus.MAINTENANCE
-                    : GateStatus.NORMAL);
+            blockEntity.setStatus(blockEntity.idleStatus());
+        }
+        if (blockEntity.processingTicks == 0
+                && blockEntity.resetTicks == 0
+                && blockEntity.pendingPlayer == null
+                && state.getValue(FareGateBlock.STATUS) != blockEntity.idleStatus()) {
+            blockEntity.setStatus(blockEntity.idleStatus());
         }
     }
 
@@ -91,13 +99,16 @@ public final class FareGateBlockEntity extends BlockEntity {
             return;
         }
         if (processingTicks > 0 || pendingPlayer != null) {
-            fail(player, "Gate is already processing another card.", 0L, false);
+            rejectCard(player, "Gate is already processing another card.", true);
             return;
         }
         Optional<String> validation = configuration.validate();
         if (validation.isPresent()) {
-            setStatus(GateStatus.MAINTENANCE);
-            fail(player, "Gate is in maintenance: " + validation.get(), 0L, false);
+            rejectMaintenance(player, "Gate under maintenance: " + validation.get());
+            return;
+        }
+        if (configuration.maintenanceMode() && !canConfigure(player)) {
+            rejectMaintenance(player, "Gate under maintenance");
             return;
         }
         pendingPlayer = player.getUUID();
@@ -126,106 +137,185 @@ public final class FareGateBlockEntity extends BlockEntity {
         }
         ItemStack cardStack = player.getItemInHand(hand);
         if (!cardStack.is(ModItems.IC_CARD.get())) {
-            fail(player, "Keep the IC card on the reader until processing finishes.", 0L, true);
+            rejectCard(player, "Keep the IC card on the reader until processing finishes.", true);
             return;
         }
 
         CardLedgerSavedData ledger = CardLedgerSavedData.get(serverLevel.getServer());
         CardLedgerSavedData.Authentication authentication = ledger.authenticateAndAdvance(cardStack, player);
         if (!authentication.valid()) {
-            fail(player, authentication.message(), 0L, true);
+            rejectCard(player, authentication.message(), true);
             return;
         }
 
         boolean exit = configuration.gateMode() == GateMode.EXIT
                 || (configuration.gateMode() == GateMode.BIDIRECTIONAL && authentication.record().hasEntry());
         if (exit) {
-            processExit(player, ledger, authentication);
+            processExit(player, cardStack, ledger, authentication);
         } else {
-            processEntry(player, ledger, authentication);
+            processEntry(player, cardStack, ledger, authentication);
         }
     }
 
     private void processEntry(
             ServerPlayer player,
+            ItemStack cardStack,
             CardLedgerSavedData ledger,
             CardLedgerSavedData.Authentication authentication
     ) {
         if (authentication.record().hasEntry()) {
-            fail(player, "This IC card already has an active journey.", 0L, true);
-            log(player, authentication.record().entryStationId(), configuration.stationId(), 0L, "ENTRY_ALREADY_ACTIVE");
+            rejectCard(player, "This IC card already has an active journey.", true);
+            log(
+                    player,
+                    authentication.record().entryStationName(),
+                    configuration.stationName(),
+                    0L,
+                    "ENTRY_ALREADY_ACTIVE",
+                    authentication.cardId()
+            );
             return;
         }
         ledger.setEntry(
                 authentication.cardId(),
+                cardStack,
                 configuration.stationId(),
                 configuration.stationName(),
+                gateId,
+                System.currentTimeMillis(),
                 configuration.lineId()
         );
-        log(player, configuration.stationId(), "", 0L, "ENTRY_SUCCESS");
-        succeed(player);
+        log(player, configuration.stationName(), "", 0L, "ENTRY_SUCCESS", authentication.cardId());
+        succeed(player, "Entry recorded: " + configuration.stationName(), 0L);
     }
 
     private void processExit(
             ServerPlayer player,
+            ItemStack cardStack,
             CardLedgerSavedData ledger,
             CardLedgerSavedData.Authentication authentication
     ) {
         CardLedgerSavedData.CardRecord card = authentication.record();
         if (!card.hasEntry()) {
-            fail(player, "No entry station is recorded on this IC card.", 0L, true);
-            log(player, "", configuration.stationId(), 0L, "NO_ENTRY");
+            rejectCard(player, "No entry station is recorded on this IC card.", true);
+            log(player, "", configuration.stationName(), 0L, "NO_ENTRY", authentication.cardId());
             return;
         }
         if (!card.lineId().equals(configuration.lineId())) {
-            fail(player, "The entry and exit lines do not match.", 0L, true);
-            log(player, card.entryStationId(), configuration.stationId(), 0L, "LINE_MISMATCH");
+            rejectCard(player, "The entry and exit lines do not match.", true);
+            log(
+                    player,
+                    card.entryStationName(),
+                    configuration.stationName(),
+                    0L,
+                    "LINE_MISMATCH",
+                    authentication.cardId()
+            );
             return;
         }
 
-        long fare = configuration.fareFrom(card.entryStationId());
-        if (fare < 0) {
-            fail(player, "No fare is configured for the entry station.", 0L, true);
-            log(player, card.entryStationId(), configuration.stationId(), 0L, "FARE_MISSING");
+        FareManager.FareResult fareResult = FareManager.calculate(
+                player.getServer(),
+                configuration.fareTableId(),
+                configuration.lineId(),
+                card.entryStationId(),
+                configuration.stationId()
+        );
+        if (!fareResult.success()) {
+            paymentFailed(player, fareResult.message(), 0L);
+            log(
+                    player,
+                    card.entryStationName(),
+                    configuration.stationName(),
+                    0L,
+                    "FARE_MISSING",
+                    authentication.cardId()
+            );
             return;
         }
+        long fare = fareResult.fare();
 
         CurrencyAdapter adapter = LightmansCurrencyAdapter.INSTANCE;
         Optional<CurrencyAdapter.Account> account = adapter.resolveAccount(configuration.accountId());
         if (account.isEmpty()) {
-            fail(player, "The configured LC account is unavailable.", fare, true);
-            log(player, card.entryStationId(), configuration.stationId(), fare, "ACCOUNT_UNAVAILABLE");
+            paymentFailed(player, "The configured LC account is unavailable.", fare);
+            log(
+                    player,
+                    card.entryStationName(),
+                    configuration.stationName(),
+                    fare,
+                    "ACCOUNT_UNAVAILABLE",
+                    authentication.cardId()
+            );
             return;
         }
         CurrencyAdapter.PaymentResult payment = adapter.charge(player, account.get(), fare);
         if (!payment.success()) {
-            fail(player, payment.message(), fare, true);
-            log(player, card.entryStationId(), configuration.stationId(), fare, "PAYMENT_FAILED");
+            paymentFailed(player, payment.message(), fare);
+            log(
+                    player,
+                    card.entryStationName(),
+                    configuration.stationName(),
+                    fare,
+                    "PAYMENT_FAILED",
+                    authentication.cardId()
+            );
             return;
         }
 
-        ledger.clearEntry(authentication.cardId());
-        log(player, card.entryStationId(), configuration.stationId(), fare, "PAYMENT_SUCCESS");
-        succeed(player);
+        ledger.clearEntry(authentication.cardId(), cardStack);
+        log(
+                player,
+                card.entryStationName(),
+                configuration.stationName(),
+                fare,
+                "PAYMENT_SUCCESS",
+                authentication.cardId()
+        );
+        succeed(player, "Fare paid: " + fare + " LC", fare);
     }
 
-    private void succeed(ServerPlayer player) {
+    private void succeed(ServerPlayer player, String message, long fare) {
         lastAccessTime = level == null ? 0L : level.getGameTime();
         setStatus(GateStatus.SUCCESS);
         playSound(ModSounds.GATE_SUCCESS.get(), 0.9F, 1.15F);
         setGateOpen(true, player);
         resetTicks = OPEN_TICKS;
+        PacketDistributor.sendToPlayer(player, new TransactionResultPayload(true, message, fare));
     }
 
-    private void fail(ServerPlayer player, String reason, long fare, boolean logSound) {
+    private void paymentFailed(ServerPlayer player, String reason, long fare) {
         setGateOpen(false, null);
         setStatus(GateStatus.FAILURE);
         resetTicks = FAILURE_TICKS;
-        if (logSound) {
-            playSound(ModSounds.GATE_FAILURE.get(), 0.85F, 0.9F);
-            secondFailureSoundTicks = 4;
-        }
+        playFailureSound();
         PacketDistributor.sendToPlayer(player, new PaymentFailurePayload(reason, fare));
+    }
+
+    public void rejectNonCard(ServerPlayer player) {
+        rejectCard(player, "Please use an IC Card.", true);
+    }
+
+    private void rejectCard(ServerPlayer player, String reason, boolean sound) {
+        setGateOpen(false, null);
+        setStatus(GateStatus.FAILURE);
+        resetTicks = FAILURE_TICKS;
+        if (sound) {
+            playFailureSound();
+        }
+        player.displayClientMessage(Component.literal(reason), true);
+    }
+
+    private void rejectMaintenance(ServerPlayer player, String reason) {
+        setGateOpen(false, null);
+        setStatus(GateStatus.MAINTENANCE);
+        resetTicks = 0;
+        playFailureSound();
+        player.displayClientMessage(Component.literal(reason), true);
+    }
+
+    private void playFailureSound() {
+        playSound(ModSounds.GATE_FAILURE.get(), 0.85F, 0.9F);
+        secondFailureSoundTicks = 4;
     }
 
     private void log(
@@ -233,16 +323,20 @@ public final class FareGateBlockEntity extends BlockEntity {
             String stationIn,
             String stationOut,
             long fare,
-            String result
+            String result,
+            UUID cardId
     ) {
         TransactionLogSavedData.get(player.getServer()).append(new TransactionLogSavedData.Transaction(
                 System.currentTimeMillis(),
                 player.getUUID(),
+                player.getGameProfile().getName(),
                 stationIn,
                 stationOut,
                 fare,
                 configuration.accountId(),
-                result
+                result,
+                gateId,
+                cardId
         ));
     }
 
@@ -298,7 +392,7 @@ public final class FareGateBlockEntity extends BlockEntity {
 
     public void applyConfiguration(GateConfiguration configuration) {
         this.configuration = configuration == null ? GateConfiguration.empty() : configuration;
-        setStatus(this.configuration.validate().isPresent() ? GateStatus.MAINTENANCE : GateStatus.NORMAL);
+        setStatus(idleStatus());
         setChangedAndSync();
     }
 
@@ -317,6 +411,10 @@ public final class FareGateBlockEntity extends BlockEntity {
         return lastAccessTime;
     }
 
+    public UUID getGateId() {
+        return gateId;
+    }
+
     public String getStationId() {
         return configuration.stationId();
     }
@@ -329,8 +427,10 @@ public final class FareGateBlockEntity extends BlockEntity {
                 configuration.accountId(),
                 configuration.accountName(),
                 configuration.gateMode(),
+                configuration.fareTableId(),
                 configuration.fareTable(),
-                configuration.ownerUuid()
+                configuration.ownerUuid(),
+                configuration.maintenanceMode()
         );
         setChangedAndSync();
     }
@@ -363,6 +463,12 @@ public final class FareGateBlockEntity extends BlockEntity {
         }
     }
 
+    private GateStatus idleStatus() {
+        return configuration.maintenanceMode() || configuration.validate().isPresent()
+                ? GateStatus.MAINTENANCE
+                : GateStatus.NORMAL;
+    }
+
     private void playSound(net.minecraft.sounds.SoundEvent sound, float volume, float pitch) {
         if (level != null) {
             level.playSound(null, worldPosition, sound, SoundSource.BLOCKS, volume, pitch);
@@ -382,6 +488,7 @@ public final class FareGateBlockEntity extends BlockEntity {
         super.loadAdditional(tag, registries);
         gateOpen = tag.getBoolean(GATE_OPEN_TAG);
         lastAccessTime = tag.getLong(LAST_ACCESS_TIME_TAG);
+        gateId = tag.hasUUID(GATE_ID_TAG) ? tag.getUUID(GATE_ID_TAG) : UUID.randomUUID();
         configuration = tag.contains(CONFIGURATION_TAG, Tag.TAG_COMPOUND)
                 ? GateConfiguration.load(tag.getCompound(CONFIGURATION_TAG))
                 : GateConfiguration.empty();
@@ -392,6 +499,7 @@ public final class FareGateBlockEntity extends BlockEntity {
         super.saveAdditional(tag, registries);
         tag.putBoolean(GATE_OPEN_TAG, gateOpen);
         tag.putLong(LAST_ACCESS_TIME_TAG, lastAccessTime);
+        tag.putUUID(GATE_ID_TAG, gateId);
         tag.put(CONFIGURATION_TAG, configuration.save());
     }
 

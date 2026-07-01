@@ -19,6 +19,7 @@ public final class ModCreativeTabs {
                     .icon(() -> ModItems.IC_CARD.get().getDefaultInstance())
                     .displayItems((parameters, output) -> {
                         output.accept(ModItems.FARE_GATE.get());
+                        output.accept(ModItems.IC_CARD_ISSUER.get());
                         output.accept(ModItems.IC_CARD.get());
                         output.accept(ModItems.CONFIG_CARD.get());
                     })

@@ -3,12 +3,14 @@ package com.kaede050492.createfaremod.block;
 import com.kaede050492.createfaremod.block.entity.FareGateBlockEntity;
 import com.kaede050492.createfaremod.gate.GateStatus;
 import com.kaede050492.createfaremod.registry.ModBlockEntities;
+import com.kaede050492.createfaremod.registry.ModItems;
 import com.mojang.serialization.MapCodec;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -138,6 +140,27 @@ public final class FareGateBlock extends BaseEntityBlock implements SimpleWaterl
     }
 
     @Override
+    protected ItemInteractionResult useItemOn(
+            ItemStack stack,
+            BlockState state,
+            Level level,
+            BlockPos pos,
+            Player player,
+            net.minecraft.world.InteractionHand hand,
+            BlockHitResult hitResult
+    ) {
+        if (stack.is(ModItems.IC_CARD.get()) || stack.is(ModItems.CONFIG_CARD.get())) {
+            return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION;
+        }
+        if (!level.isClientSide
+                && player instanceof ServerPlayer serverPlayer
+                && level.getBlockEntity(pos) instanceof FareGateBlockEntity fareGate) {
+            fareGate.rejectNonCard(serverPlayer);
+        }
+        return ItemInteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    @Override
     protected InteractionResult useWithoutItem(
             BlockState state,
             Level level,
@@ -151,8 +174,8 @@ public final class FareGateBlock extends BaseEntityBlock implements SimpleWaterl
         if (level.getBlockEntity(pos) instanceof FareGateBlockEntity fareGate) {
             if (player.isShiftKeyDown() && player instanceof ServerPlayer serverPlayer) {
                 fareGate.openOperatorMenu(serverPlayer);
-            } else {
-                fareGate.toggleGate(player);
+            } else if (player instanceof ServerPlayer serverPlayer) {
+                fareGate.rejectNonCard(serverPlayer);
             }
             return InteractionResult.CONSUME;
         }

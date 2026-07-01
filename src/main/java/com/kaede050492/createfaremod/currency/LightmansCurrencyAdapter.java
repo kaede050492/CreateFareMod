@@ -78,4 +78,43 @@ public final class LightmansCurrencyAdapter implements CurrencyAdapter {
         }
         return PaymentResult.approved();
     }
+
+    @Override
+    public PaymentResult debit(ServerPlayer player, long amount) {
+        if (amount < 0L) {
+            return PaymentResult.failure("Invalid issuing fee.");
+        }
+        if (amount == 0L) {
+            return PaymentResult.approved();
+        }
+        MoneyValue value = CoinValue.fromNumber(DEFAULT_COIN_CHAIN, amount);
+        if (value.isEmpty() || value.isInvalid()) {
+            return PaymentResult.failure("The LC main coin chain cannot represent this fee.");
+        }
+        IMoneyHandler payer = MoneyAPI.getApi().GetPlayersMoneyHandler(player);
+        if (!payer.extractMoney(value, true).isEmpty()) {
+            return PaymentResult.failure("Insufficient balance.");
+        }
+        if (!payer.extractMoney(value, false).isEmpty()) {
+            return PaymentResult.failure("Balance changed before payment completed.");
+        }
+        return PaymentResult.approved();
+    }
+
+    @Override
+    public Balance getBalance(ServerPlayer player) {
+        long balance = 0L;
+        for (MoneyValue value : MoneyAPI.getApi().GetPlayersMoneyHandler(player)
+                .getStoredMoney()
+                .allValues()) {
+            if (value instanceof CoinValue coinValue
+                    && DEFAULT_COIN_CHAIN.equals(coinValue.getChain())) {
+                long valueAmount = Math.max(0L, coinValue.getCoreValue());
+                balance = Long.MAX_VALUE - balance < valueAmount
+                        ? Long.MAX_VALUE
+                        : balance + valueAmount;
+            }
+        }
+        return new Balance(balance, balance + " LC");
+    }
 }

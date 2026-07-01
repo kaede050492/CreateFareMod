@@ -2,6 +2,7 @@ package com.kaede050492.createfaremod.registry;
 
 import com.kaede050492.createfaremod.CreateFareMod;
 import com.kaede050492.createfaremod.block.FareGateBlock;
+import com.kaede050492.createfaremod.block.IcCardIssuerBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
@@ -15,6 +16,15 @@ public final class ModBlocks {
     public static final DeferredBlock<FareGateBlock> FARE_GATE = BLOCKS.register(
             "fare_gate",
             () -> new FareGateBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.METAL)
+                    .strength(3.0F, 6.0F)
+                    .sound(SoundType.METAL)
+                    .requiresCorrectToolForDrops())
+    );
+
+    public static final DeferredBlock<IcCardIssuerBlock> IC_CARD_ISSUER = BLOCKS.register(
+            "ic_card_issuer",
+            () -> new IcCardIssuerBlock(BlockBehaviour.Properties.of()
                     .mapColor(MapColor.METAL)
                     .strength(3.0F, 6.0F)
                     .sound(SoundType.METAL)

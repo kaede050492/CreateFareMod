@@ -1,6 +1,6 @@
 {
   "parent": "createfaremod:block/fare_gate_open_base",
   "textures": {
-    "signal": "minecraft:block/lime_concrete"
+    "reader": "minecraft:block/lime_concrete"
   }
 }

@@ -4,7 +4,6 @@ import com.kaede050492.createfaremod.gate.GateConfiguration;
 import com.kaede050492.createfaremod.gate.GateMode;
 import com.kaede050492.createfaremod.menu.FareGateMenu;
 import com.kaede050492.createfaremod.network.SaveGateConfigurationPayload;
-import java.util.Map;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -15,15 +14,17 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 public final class FareGateScreen extends AbstractContainerScreen<FareGateMenu> {
     private static final int PANEL_WIDTH = 280;
-    private static final int PANEL_HEIGHT = 222;
+    private static final int PANEL_HEIGHT = 270;
 
     private EditBox stationId;
     private EditBox stationName;
     private EditBox lineId;
     private EditBox accountId;
-    private EditBox fareTable;
+    private EditBox fareTableId;
     private Button modeButton;
+    private Button maintenanceButton;
     private GateMode gateMode;
+    private boolean maintenanceMode;
     private String validationMessage = "";
 
     public FareGateScreen(FareGateMenu menu, Inventory inventory, Component title) {
@@ -31,6 +32,7 @@ public final class FareGateScreen extends AbstractContainerScreen<FareGateMenu> 
         imageWidth = PANEL_WIDTH;
         imageHeight = PANEL_HEIGHT;
         gateMode = menu.getConfiguration().gateMode();
+        maintenanceMode = menu.getConfiguration().maintenanceMode();
     }
 
     @Override
@@ -43,12 +45,16 @@ public final class FareGateScreen extends AbstractContainerScreen<FareGateMenu> 
         stationName = addField(fieldX, topPos + 52, fieldWidth, configuration.stationName(), 64);
         lineId = addField(fieldX, topPos + 76, fieldWidth, configuration.lineId(), 32);
         accountId = addField(fieldX, topPos + 100, fieldWidth, configuration.accountId(), 80);
-        fareTable = addField(fieldX, topPos + 148, fieldWidth, configuration.formatFareTable(), 1024);
+        fareTableId = addField(fieldX, topPos + 172, fieldWidth, configuration.fareTableId(), 32);
 
         modeButton = addRenderableWidget(Button.builder(
                 modeText(),
                 button -> cycleMode()
         ).bounds(fieldX, topPos + 124, fieldWidth, 20).build());
+        maintenanceButton = addRenderableWidget(Button.builder(
+                maintenanceText(),
+                button -> toggleMaintenance()
+        ).bounds(fieldX, topPos + 148, fieldWidth, 20).build());
         addRenderableWidget(Button.builder(
                 Component.translatable("screen.createfaremod.fare_gate.save"),
                 button -> save()
@@ -72,14 +78,18 @@ public final class FareGateScreen extends AbstractContainerScreen<FareGateMenu> 
         return Component.translatable("gate_mode.createfaremod." + gateMode.name().toLowerCase());
     }
 
+    private void toggleMaintenance() {
+        maintenanceMode = !maintenanceMode;
+        maintenanceButton.setMessage(maintenanceText());
+    }
+
+    private Component maintenanceText() {
+        return Component.translatable(maintenanceMode
+                ? "screen.createfaremod.fare_gate.maintenance_on"
+                : "screen.createfaremod.fare_gate.maintenance_off");
+    }
+
     private void save() {
-        Map<String, Long> fares;
-        try {
-            fares = GateConfiguration.parseFareTable(fareTable.getValue());
-        } catch (IllegalArgumentException exception) {
-            validationMessage = exception.getMessage();
-            return;
-        }
         GateConfiguration configuration = new GateConfiguration(
                 stationId.getValue(),
                 stationName.getValue(),
@@ -87,8 +97,10 @@ public final class FareGateScreen extends AbstractContainerScreen<FareGateMenu> 
                 accountId.getValue(),
                 menu.getConfiguration().accountName(),
                 gateMode,
-                fares,
-                menu.getConfiguration().ownerUuid()
+                fareTableId.getValue(),
+                menu.getConfiguration().fareTable(),
+                menu.getConfiguration().ownerUuid(),
+                maintenanceMode
         );
         validationMessage = configuration.validate().orElse("");
         if (!validationMessage.isEmpty()) {
@@ -112,7 +124,8 @@ public final class FareGateScreen extends AbstractContainerScreen<FareGateMenu> 
         drawLabel(graphics, "screen.createfaremod.fare_gate.line", 78);
         drawLabel(graphics, "screen.createfaremod.fare_gate.account", 102);
         drawLabel(graphics, "screen.createfaremod.fare_gate.mode", 126);
-        drawLabel(graphics, "screen.createfaremod.fare_gate.fare_table", 150);
+        drawLabel(graphics, "screen.createfaremod.fare_gate.maintenance", 150);
+        drawLabel(graphics, "screen.createfaremod.fare_gate.fare_table", 174);
         graphics.drawString(
                 font,
                 Component.translatable(
@@ -120,12 +133,12 @@ public final class FareGateScreen extends AbstractContainerScreen<FareGateMenu> 
                         menu.getConfiguration().accountName()
                 ),
                 96,
-                178,
+                202,
                 0x555555,
                 false
         );
         if (!validationMessage.isEmpty()) {
-            graphics.drawString(font, validationMessage, 12, 202, 0xCC2222, false);
+            graphics.drawString(font, validationMessage, 12, 244, 0xCC2222, false);
         }
     }
 

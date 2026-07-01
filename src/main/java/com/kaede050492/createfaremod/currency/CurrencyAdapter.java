@@ -8,6 +8,10 @@ public interface CurrencyAdapter {
 
     PaymentResult charge(ServerPlayer player, Account account, long fare);
 
+    PaymentResult debit(ServerPlayer player, long amount);
+
+    Balance getBalance(ServerPlayer player);
+
     record Account(String id, String name, Object handle) {
     }
 
@@ -19,5 +23,8 @@ public interface CurrencyAdapter {
         public static PaymentResult failure(String message) {
             return new PaymentResult(false, message);
         }
+    }
+
+    record Balance(long amount, String displayText) {
     }
 }

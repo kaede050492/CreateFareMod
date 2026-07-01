@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "createfaremod:fare_gate"
+    "createfaremod:fare_gate",
+    "createfaremod:ic_card_issuer"
   ]
 }

@@ -1,0 +1,12 @@
+{
+  "type": "distance",
+  "line": "line_1",
+  "baseFare": 150,
+  "minimumFare": 150,
+  "perDistance": 10,
+  "stations": {
+    "station_a": 0,
+    "station_b": 6,
+    "station_c": 14
+  }
+}

@@ -64,13 +64,21 @@ public final class FareGateConfigCardItem extends Item {
             List<Component> tooltip,
             TooltipFlag flag
     ) {
+        if (!TooltipHelper.showDetails(tooltip)) {
+            return;
+        }
+        TooltipHelper.addDetail(tooltip, "tooltip.createfaremod.config_card.purpose");
+        TooltipHelper.addDetail(tooltip, "tooltip.createfaremod.config_card.usage");
+        TooltipHelper.addDetail(tooltip, "tooltip.createfaremod.config_card.configuration");
         GateConfiguration configuration = readConfiguration(stack);
         if (configuration != null && !configuration.stationName().isBlank()) {
-            tooltip.add(Component.translatable(
-                    "tooltip.createfaremod.config_card.station", configuration.stationName()
-            ));
+            TooltipHelper.addStatus(
+                    tooltip,
+                    "tooltip.createfaremod.config_card.station",
+                    configuration.stationName()
+            );
         } else {
-            tooltip.add(Component.translatable("tooltip.createfaremod.config_card.empty"));
+            TooltipHelper.addStatus(tooltip, "tooltip.createfaremod.config_card.empty");
         }
     }
 

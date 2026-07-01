@@ -2,6 +2,7 @@ package com.kaede050492.createfaremod.registry;
 
 import com.kaede050492.createfaremod.CreateFareMod;
 import com.kaede050492.createfaremod.block.entity.FareGateBlockEntity;
+import com.kaede050492.createfaremod.block.entity.IcCardIssuerBlockEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.bus.api.IEventBus;
@@ -16,6 +17,14 @@ public final class ModBlockEntities {
             BLOCK_ENTITY_TYPES.register(
                     "fare_gate",
                     () -> BlockEntityType.Builder.of(FareGateBlockEntity::new, ModBlocks.FARE_GATE.get()).build(null)
+            );
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<IcCardIssuerBlockEntity>> IC_CARD_ISSUER =
+            BLOCK_ENTITY_TYPES.register(
+                    "ic_card_issuer",
+                    () -> BlockEntityType.Builder.of(
+                            IcCardIssuerBlockEntity::new,
+                            ModBlocks.IC_CARD_ISSUER.get()
+                    ).build(null)
             );
 
     private ModBlockEntities() {

@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "createfaremod:block/ic_card_issuer"
+    }
+  }
+}

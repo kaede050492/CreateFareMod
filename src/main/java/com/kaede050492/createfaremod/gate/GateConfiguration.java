@@ -15,8 +15,10 @@ public record GateConfiguration(
         String accountId,
         String accountName,
         GateMode gateMode,
+        String fareTableId,
         Map<String, Long> fareTable,
-        UUID ownerUuid
+        UUID ownerUuid,
+        boolean maintenanceMode
 ) {
     public static final int MAX_ID_LENGTH = 32;
     public static final int MAX_NAME_LENGTH = 64;
@@ -31,11 +33,38 @@ public record GateConfiguration(
         accountId = clean(accountId);
         accountName = clean(accountName);
         gateMode = gateMode == null ? GateMode.BIDIRECTIONAL : gateMode;
+        fareTableId = clean(fareTableId);
         fareTable = Map.copyOf(fareTable == null ? Map.of() : new TreeMap<>(fareTable));
     }
 
+    public GateConfiguration(
+            String stationId,
+            String stationName,
+            String lineId,
+            String accountId,
+            String accountName,
+            GateMode gateMode,
+            Map<String, Long> fareTable,
+            UUID ownerUuid
+    ) {
+        this(
+                stationId,
+                stationName,
+                lineId,
+                accountId,
+                accountName,
+                gateMode,
+                "default",
+                fareTable,
+                ownerUuid,
+                false
+        );
+    }
+
     public static GateConfiguration empty() {
-        return new GateConfiguration("", "", "", "", "", GateMode.BIDIRECTIONAL, Map.of(), null);
+        return new GateConfiguration(
+                "", "", "", "", "", GateMode.BIDIRECTIONAL, "default", Map.of(), null, false
+        );
     }
 
     public Optional<String> validate() {
@@ -50,6 +79,9 @@ public record GateConfiguration(
         }
         if (accountId.isBlank() || accountId.length() > MAX_ACCOUNT_LENGTH) {
             return Optional.of("LC account must use player:<UUID> or team:<ID>.");
+        }
+        if (!validId(fareTableId)) {
+            return Optional.of("Fare table ID must contain 1-32 letters, numbers, '.', '_' or '-'.");
         }
         if (fareTable.size() > MAX_FARE_ENTRIES) {
             return Optional.of("Fare table has too many entries.");
@@ -68,13 +100,31 @@ public record GateConfiguration(
 
     public GateConfiguration withOwner(UUID owner) {
         return new GateConfiguration(
-                stationId, stationName, lineId, accountId, accountName, gateMode, fareTable, owner
+                stationId,
+                stationName,
+                lineId,
+                accountId,
+                accountName,
+                gateMode,
+                fareTableId,
+                fareTable,
+                owner,
+                maintenanceMode
         );
     }
 
     public GateConfiguration withAccountName(String resolvedName) {
         return new GateConfiguration(
-                stationId, stationName, lineId, accountId, resolvedName, gateMode, fareTable, ownerUuid
+                stationId,
+                stationName,
+                lineId,
+                accountId,
+                resolvedName,
+                gateMode,
+                fareTableId,
+                fareTable,
+                ownerUuid,
+                maintenanceMode
         );
     }
 
@@ -86,6 +136,8 @@ public record GateConfiguration(
         tag.putString("accountId", accountId);
         tag.putString("accountName", accountName);
         tag.putString("gateMode", gateMode.name());
+        tag.putString("fareTableId", fareTableId);
+        tag.putBoolean("maintenanceMode", maintenanceMode);
         CompoundTag fares = new CompoundTag();
         fareTable.forEach(fares::putLong);
         tag.put("fareTable", fares);
@@ -109,8 +161,10 @@ public record GateConfiguration(
                 tag.getString("accountId"),
                 tag.getString("accountName"),
                 GateMode.parse(tag.getString("gateMode")),
+                tag.contains("fareTableId") ? tag.getString("fareTableId") : "default",
                 fares,
-                owner
+                owner,
+                tag.getBoolean("maintenanceMode")
         );
     }
 

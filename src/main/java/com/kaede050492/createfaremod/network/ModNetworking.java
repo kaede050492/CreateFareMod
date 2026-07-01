@@ -14,10 +14,25 @@ public final class ModNetworking {
                 SaveGateConfigurationPayload.STREAM_CODEC,
                 SaveGateConfigurationPayload::handle
         );
+        registrar.playToServer(
+                IssueIcCardPayload.TYPE,
+                IssueIcCardPayload.STREAM_CODEC,
+                IssueIcCardPayload::handle
+        );
+        registrar.playToServer(
+                SaveIssuerFeePayload.TYPE,
+                SaveIssuerFeePayload.STREAM_CODEC,
+                SaveIssuerFeePayload::handle
+        );
         registrar.playToClient(
                 PaymentFailurePayload.TYPE,
                 PaymentFailurePayload.STREAM_CODEC,
                 PaymentFailurePayload::handle
+        );
+        registrar.playToClient(
+                TransactionResultPayload.TYPE,
+                TransactionResultPayload.STREAM_CODEC,
+                TransactionResultPayload::handle
         );
     }
 }
